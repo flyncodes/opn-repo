@@ -1,0 +1,38 @@
+name: Build FreeBSD Package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build FreeBSD package
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg update && pkg install -y \
+                git \
+                php82 \
+                python3 \
+                && pkg clean -ay
+          run: |
+            git config --global --add safe.directory $GITHUB_WORKSPACE
+            cd net-mgmt/speedtest-community/
+            make package
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: freebsd-package
+          path: net-mgmt/speedtest-community/work/pkg/*.pkg
